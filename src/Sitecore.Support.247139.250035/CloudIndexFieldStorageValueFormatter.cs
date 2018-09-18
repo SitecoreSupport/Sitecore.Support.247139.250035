@@ -38,6 +38,13 @@
 
       var fieldSchema = _searchIndex.SchemaBuilder.GetSchema().GetFieldByCloudName(fieldName);
 
+      #region Added code to fix issue 250035
+      if (fieldSchema == null)
+      {
+        fieldSchema = this._searchIndex.SearchService.Schema.GetFieldByCloudName(fieldName);
+      }
+      #endregion
+
       if (fieldSchema == null)
       {
         return value;
@@ -165,7 +172,14 @@
     {
       var index = searchIndex as ICloudSearchIndex;
 
-      _searchIndex = index ?? throw new NotSupportedException($"Only {typeof(CloudSearchProviderIndex).Name} is supported");
+      #region Change for compatibility with C# 6
+
+      if (index == null)
+      {
+        throw new NotSupportedException($"Only {typeof(CloudSearchProviderIndex).Name} is supported");
+      }
+      this._searchIndex = index;
+      #endregion
 
       base.Initialize(searchIndex);
     }
