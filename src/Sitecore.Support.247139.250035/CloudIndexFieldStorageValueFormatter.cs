@@ -1,4 +1,4 @@
-﻿namespace Sitecore.XA.Foundation.Search.Providers.Azure
+﻿namespace Sitecore.Support.XA.Foundation.Search.Providers.Azure
 {
   using System;
   using System.Collections;
@@ -313,7 +313,8 @@
     {
       if (typeof(IEnumerable<string>).IsAssignableFrom(expectedType))
       {
-        if (value is string || !(value is IEnumerable))
+        var values = value as IEnumerable;
+        if (value is string || values == null)
         {
           var convertedItem = ConvertToType(value, typeof(string), context);
 
@@ -326,17 +327,16 @@
 
           result = new[]
           {
-                        (string)convertedItem
+                        System.Convert.ToString(convertedItem, CultureInfo.InvariantCulture)
                     };
 
           return true;
         }
 
-        if (!(value is IEnumerable<string>))
+        if (!(values is IEnumerable<string>))
         {
           var list = new List<string>();
-
-          foreach (var item in (IEnumerable)value)
+          foreach (var item in values)
           {
             var convertedItem = ConvertToType(item, typeof(string), context);
 
@@ -347,7 +347,7 @@
               return false;
             }
 
-            list.Add((string)convertedItem);
+            list.Add(System.Convert.ToString(convertedItem, CultureInfo.InvariantCulture));
           }
 
           result = list.ToArray();
@@ -396,13 +396,16 @@
           // Convert single value to an enumerable with a single element
           if (destinationType != typeof(string) && !indexValue.Equals(string.Empty))
           {
-            return EnumerableConverter.ConvertTo(converterContext, CultureInfo.InvariantCulture, new[] { indexValue }, destinationType);
+            return EnumerableConverter.ConvertTo(converterContext, CultureInfo.InvariantCulture, new[]
+            {
+                            indexValue
+                        }, destinationType);
           }
         }
 
-        if (typeof(IConvertible).IsAssignableFrom(destinationType) && !indexValue.Equals(string.Empty))
+        if (typeof(IConvertible).IsAssignableFrom(destinationType) && !indexValue.Equals(string.Empty) && converter == null)
         {
-          return System.Convert.ChangeType(indexValue, destinationType);
+          return System.Convert.ChangeType(indexValue, destinationType, CultureInfo.InvariantCulture);
         }
 
         return converter?.ConvertFrom(converterContext, CultureInfo.InvariantCulture, indexValue);
